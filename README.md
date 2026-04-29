@@ -8,7 +8,6 @@ A Python script to programmatically trigger Copilot Studio agent evaluations, po
 - [Evaluation REST API reference — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-rest-api)
 - [Run tests and view results — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-results)
 - [Generate and import test sets — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-create)
-- [Power Platform REST API reference](https://learn.microsoft.com/en-us/rest/api/power-platform/)
 - [MSAL Python library](https://github.com/AzureAD/microsoft-authentication-library-for-python)
 
 ---
