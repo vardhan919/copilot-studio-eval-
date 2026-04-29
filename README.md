@@ -130,11 +130,3 @@ Duration calculation broke because `strptime` with a fixed format didn't handle 
 
 When tests fail, the `aiResultReason` field tells you *why* the AI judge scored the response poorly. In testing, all 12 failures pointed to the same root cause: the agent gave suggestions instead of a "not found" response. One instruction added to the system prompt fixed it — pass rate jumped from ~20% to 80%+. Don't just look at scores; read the reasons.
 
-### 6. Enterprise auth has many walls
-
-- Client secrets: blocked by tenant policy in many orgs
-- Interactive browser: works locally, hangs in CI
-- `powerplatform-spn` service connections: not compatible with `AzureCLI@2` task (different connection types)
-- Power Platform Build Tools tasks: not whitelisted in all tenants
-
-Simplest local path: `az login` + this script (no app registration needed if you already have access). For CI/CD: Managed Identity via Azure Functions.
