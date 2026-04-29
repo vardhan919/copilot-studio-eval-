@@ -102,6 +102,98 @@ results/          — JSON + JUnit XML saved per run (git-ignored)
 
 ---
 
+## API Request & Response Reference
+
+### 1. Trigger an evaluation run
+
+```
+POST https://api.powerplatform.com/copilotstudio/environments/{environmentId}/bots/{botId}/api/makerevaluation/testsets/{testSetId}/run?api-version=2024-10-01
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{}
+```
+
+Response `202 Accepted`:
+```json
+{
+  "runId": "dfee2b9e-d352-4f83-9599-55465e701fb9"
+}
+```
+
+> The docs say this is a GET — it is a **POST**. GET returns 404.
+
+---
+
+### 2. Poll for results
+
+```
+GET https://api.powerplatform.com/copilotstudio/environments/{environmentId}/bots/{botId}/api/makerevaluation/testruns/{runId}?api-version=2024-10-01
+Authorization: Bearer <token>
+```
+
+Keep polling until `state` is no longer `"Queued"` or `"Running"`. Terminal states: `Completed`, `Failed`, `Cancelled`, `Error`.
+
+Response:
+```json
+{
+  "id": "<run-id>",
+  "state": "Completed",
+  "startTime": "2026-04-29T09:54:19.0809989+00:00",
+  "endTime": "2026-04-29T09:58:22.9508527+00:00",
+  "totalTestCases": 20,
+  "testCasesProcessed": 20,
+  "testCasesResults": [
+    {
+      "testCaseId": "<test-case-id>",
+      "state": "Completed",
+      "metricsResults": [
+        {
+          "type": "CompareMeaning",
+          "result": {
+            "status": "Pass",
+            "data": {
+              "score": "100"
+            },
+            "aiResultReason": "The agent answer and the expected response mean the same thing.",
+            "errorReason": null
+          }
+        },
+        {
+          "type": "GeneralQuality",
+          "result": {
+            "status": "Fail",
+            "data": {
+              "abstention": "Yes",
+              "relevance": "NA",
+              "completeness": "No"
+            },
+            "aiResultReason": null,
+            "errorReason": null
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Key fields to focus on
+
+| Field | Where | What it means |
+|---|---|---|
+| `state` (run level) | root | Whether the run finished — `"Completed"` means it ran, **not** that it passed |
+| `testCasesResults[]` | root | One entry per test case |
+| `metricsResults[].type` | per test case | Metric name — e.g. `CompareMeaning`, `GeneralQuality` |
+| `metricsResults[].result.status` | per metric | `"Pass"` or `"Fail"` — this is your actual pass/fail signal |
+| `metricsResults[].result.aiResultReason` | per metric | Why the AI judge scored it that way — read this when debugging failures |
+| `metricsResults[].result.data` | per metric | Metric-specific scores (e.g. `score`, `abstention`, `relevance`, `completeness`) |
+| `metricsResults[].result.errorReason` | per metric | Set if the metric itself failed to evaluate (not the same as a failing test) |
+
+> All eval fields (`status`, `aiResultReason`, `data`, `errorReason`) are nested inside `metric["result"]` — not directly on `metric`.
+
+---
+
 ## Lessons Learned
 
 These cost real debugging time — saving you the same.
