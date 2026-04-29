@@ -4,10 +4,12 @@ A Python script to programmatically trigger Copilot Studio agent evaluations, po
 
 ## Useful Links
 
-- [Copilot Studio Evaluation REST API docs](https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-test-set-test-run-api)
-- [Power Platform API reference](https://learn.microsoft.com/en-us/rest/api/power-platform/)
+- [About agent evaluation — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-intro)
+- [Evaluation REST API reference — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-rest-api)
+- [Run tests and view results — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-results)
+- [Generate and import test sets — Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-create)
+- [Power Platform REST API reference](https://learn.microsoft.com/en-us/rest/api/power-platform/)
 - [MSAL Python library](https://github.com/AzureAD/microsoft-authentication-library-for-python)
-- [Copilot Studio — Create and manage test sets](https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-test-set)
 
 ---
 
@@ -56,12 +58,20 @@ pip install -r requirements.txt
 
 ### 3. Configure `.env`
 
+Copy `.env.template` to `.env` and fill in your values:
+
 ```env
 AZURE_TENANT_ID=<your-entra-tenant-id>
 CLIENT_ID=<your-app-registration-client-id>
 ENVIRONMENT_ID=<your-power-platform-environment-id>
 BOT_ID=<your-copilot-studio-bot-id>
-TEST_SET_NAME=<your-test-set-name>
+
+# Single test set
+TEST_SET_NAME=My Test Set
+
+# Multiple test sets (comma-separated) — all run in sequence
+# TEST_SET_NAME=Test Set One, Test Set Two, Test Set Three
+
 POLL_INTERVAL_SEC=10
 POLL_TIMEOUT_SEC=300
 ```
@@ -87,7 +97,7 @@ src/
   client.py       — typed wrapper for the Power Platform REST API
   runner.py       — test set resolution, trigger, poll, result parsing
   reporter.py     — console output, JSON and JUnit XML writers
-.env.example      — config template (copy to .env and fill in)
+.env.template     — config template (copy to .env and fill in)
 results/          — JSON + JUnit XML saved per run (git-ignored)
 ```
 
