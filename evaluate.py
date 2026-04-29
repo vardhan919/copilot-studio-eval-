@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from src.auth import get_token
 from src.client import CopilotStudioClient
@@ -52,25 +53,45 @@ def main():
     else:
         test_sets = [resolve_test_set(client)]  # auto-select if only one active test set exists
 
-    logging.info(f"Running {len(test_sets)} test set(s): {[ts.get('displayName') for ts in test_sets]}")
+    logging.info(f"Running {len(test_sets)} test set(s) in parallel: {[ts.get('displayName') for ts in test_sets]}")
+
+    def _run_one(ts: dict) -> tuple[dict, dict | Exception]:
+        try:
+            run = run_evaluation(client, ts["id"], poll_interval, timeout)
+            return ts, run
+        except Exception as exc:
+            return ts, exc
+
+    # Trigger all test sets simultaneously — each polls independently
+    collected: list[tuple[dict, dict | Exception]] = []
+    with ThreadPoolExecutor(max_workers=len(test_sets)) as executor:
+        futures = {executor.submit(_run_one, ts): ts for ts in test_sets}
+        for future in as_completed(futures):
+            collected.append(future.result())
+
+    collected.sort(key=lambda x: x[0].get("displayName", ""))
 
     run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     summary_rows: list[tuple[str, dict]] = []
     all_green = True
 
-    for ts in test_sets:
+    for ts, result in collected:
         ts_name = ts.get("displayName", "unknown")
-        run = run_evaluation(client, ts["id"], poll_interval, timeout)
-        passed = print_results(run, ts_name)
+        if isinstance(result, Exception):
+            logging.error(f"[{ts_name}] failed: {result}")
+            all_green = False
+            continue
+
+        passed = print_results(result, ts_name)
         all_green = all_green and passed
 
-        stats = analyze(run)
+        stats = analyze(result)
         summary_rows.append((ts_name, stats))
 
         slug = ts_name.lower().replace(" ", "_")[:40]
         base = os.path.join("results", f"{run_ts}_{slug}")
-        write_json(run, stats, f"{base}.json")
-        write_junit_xml(run, stats, f"{base}_junit.xml", ts_name)
+        write_json(result, stats, f"{base}.json")
+        write_junit_xml(result, stats, f"{base}_junit.xml", ts_name)
         logging.info(f"Results saved -> {base}.json  |  {base}_junit.xml")
 
     if len(summary_rows) > 1:
